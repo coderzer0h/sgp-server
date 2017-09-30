@@ -5,27 +5,29 @@ import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
+	uuid "github.com/satori/go.uuid"
 )
 
 // NetStack represents the servers networking stack
 type NetStack struct {
-	clients []Client
-	port    int
+	address  net.UDPAddr
+	sessions map[uuid.UUID]Session
+	port     int
 }
 
 // NewNetStack returns a new networking stack
 func NewNetStack() *NetStack {
-	c := make([]Client, 10)
+	s := make(map[uuid.UUID]Session, 10)
 	n := NetStack{
-		clients: c,
-		port:    1337,
+		sessions: s,
+		port:     31337,
 	}
 	return &n
 }
 
 // Listen listens for connections
 func (n *NetStack) Listen() error {
-	addr, err := net.ResolveUDPAddr("udp", ":11337")
+	addr, err := net.ResolveUDPAddr("udp", ":31337")
 	if err != nil {
 		logrus.Fatal(err)
 	}
@@ -33,7 +35,7 @@ func (n *NetStack) Listen() error {
 		var wg sync.WaitGroup
 		go func() {
 			wg.Add(1)
-			logrus.Infof("Listening on port %s", "11337")
+			logrus.Infof("Listening on port %s", "31337")
 			ln, err := net.ListenUDP("udp", addr)
 			if err != nil {
 				logrus.Fatal(err)
