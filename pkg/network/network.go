@@ -1,11 +1,13 @@
 package network
 
 import (
+	"bytes"
 	"net"
 	"sync"
 
 	"github.com/Sirupsen/logrus"
 	uuid "github.com/satori/go.uuid"
+	"github.com/vmihailenco/msgpack"
 )
 
 // NetStack represents the servers networking stack
@@ -41,14 +43,32 @@ func (n *NetStack) Listen() error {
 				logrus.Fatal(err)
 			}
 
-			buf := make([]byte, 1024)
+			buf := make([]byte, 10240)
 
 			for {
 				n, addr, err := ln.ReadFromUDP(buf)
 				if err != nil {
 					logrus.Error(err)
 				}
-				logrus.Infof("Read %s from %s", n, addr)
+
+				r := bytes.NewReader(buf)
+				mp := msgpack.NewDecoder(r)
+
+				id, err := mp.DecodeInt()
+				if err != nil {
+					logrus.Info(err)
+				}
+				seq, err := mp.DecodeInt64()
+				if err != nil {
+					logrus.Info(err)
+				}
+
+				msg, err := mp.DecodeString()
+				if err != nil {
+					logrus.Info(err)
+				}
+
+				logrus.Infof("Read %s,%s,%s,%s from %s", id, seq, msg, n, addr)
 			}
 
 		}()
